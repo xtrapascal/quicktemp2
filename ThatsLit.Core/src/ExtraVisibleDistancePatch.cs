@@ -1,4 +1,4 @@
-#define DEBUG_DETAILS
+﻿#define DEBUG_DETAILS
 using SPT.Reflection.Patching;
 using HarmonyLib;
 using System.Reflection;
@@ -18,16 +18,24 @@ namespace ThatsLit
 
         protected override MethodBase GetTargetMethod()
         {
-            return AccessTools.Method(typeof(EnemyInfo), "CheckVisibility");
+            return AccessTools.Method(typeof(EnemyInfo), "CheckVisibilityPart");
         }
 
         [PatchPrefix]
         [HarmonyAfter("me.sol.sain")]
-        public static bool PatchPrefix(EnemyInfo __instance, KeyValuePair<EnemyPart, EnemyPartData> part, ref float addVisibility)
+        public static bool PatchPrefix(
+    EnemyInfo __instance,
+    KeyValuePair<EnemyPart, EnemyPartData> enemyPart, // ✅ MATCH THE NAME!
+    LayerMask lookSensorMask,
+    bool onSense,
+    bool onSenceGreen,
+    ref float addSensorDistance,                      // ✅ rename to match original
+    float visibilityChangeSpeedK,
+    float deltaTime)                 // ← new
         {
             ThatsLitPlugin.swExtraVisDis.MaybeResume();
             if (__instance?.Owner == null
-             || (part.Key?.Owner?.IsAI ?? true) == true
+             || (enemyPart.Key?.Owner?.IsAI ?? true) == true
              || !ThatsLitPlugin.EnabledMod.Value
              || ThatsLitPlugin.ExtraVisionDistanceScale.Value == 0
              || !ThatsLitPlugin.EnabledLighting.Value
@@ -95,7 +103,7 @@ namespace ThatsLit
             if (thermalActive)
             {
                 float compensation = thermalRange - originalDist;
-                if (compensation > 0) addVisibility += UnityEngine.Random.Range(0.5f, 1f) * compensation * ThatsLitPlugin.ExtraVisionDistanceScale.Value;
+                if (compensation > 0) addSensorDistance += UnityEngine.Random.Range(0.5f, 1f) * compensation * ThatsLitPlugin.ExtraVisionDistanceScale.Value;
                 if (isNearest && player.DebugInfo != null)
                     player.DebugInfo.lastDisCompThermal = compensation;
             }
@@ -116,7 +124,7 @@ namespace ThatsLit
                     compensation *= 1f - fogFactor;
                     compensation *= scale;
                     compensation *= player.PlayerLitScoreProfile.litScoreFactor * ThatsLitPlugin.ExtraVisionDistanceScale.Value;
-                    addVisibility += compensation * UnityEngine.Random.Range(0.25f, 1f); // 0.25x~1x of extra capped at 100m
+                    addSensorDistance += compensation * UnityEngine.Random.Range(0.25f, 1f); // 0.25x~1x of extra capped at 100m
                 }
                 if (isNearest && player.DebugInfo != null)
                     player.DebugInfo.lastDisCompNVG = compensation;
@@ -128,7 +136,7 @@ namespace ThatsLit
                 {
                     compensation *= 1f - fogFactor;
                     compensation *= (1f + frame0.ambienceScore / 5f) * ThatsLitPlugin.ExtraVisionDistanceScale.Value;
-                    addVisibility += compensation * UnityEngine.Random.Range(0.2f, 1f);
+                    addSensorDistance += compensation * UnityEngine.Random.Range(0.2f, 1f);
                 }
                 if (isNearest && player.DebugInfo != null)
                     player.DebugInfo.lastDisCompDay = compensation;
@@ -143,7 +151,7 @@ namespace ThatsLit
                 if (compensation > 0)
                 {
                     compensation *= litDiff;
-                    addVisibility += compensation;
+                    addSensorDistance += compensation;
                 }
                 if (isNearest && player.DebugInfo != null)
                     player.DebugInfo.lastDisComp = compensation;

@@ -18,13 +18,30 @@ namespace ThatsLit
 
         protected override MethodBase GetTargetMethod()
         {
-            return ReflectionHelper.FindMethodByArgTypes(typeof(EnemyInfo), new Type[] { typeof(BifacialTransform), typeof(BifacialTransform), typeof(BotDifficultySettingsClass), typeof(IAIData), typeof(float), typeof(Vector3), typeof(bool) }); ;
+            return ReflectionHelper.FindMethodByArgTypes(typeof(EnemyInfo), new Type[] {
+    typeof(BotDifficultySettingsClass),
+    typeof(IAIData),
+    typeof(float),          // personalLastSeenTime
+    typeof(Vector3),        // personalLastSeenPos
+    typeof(float),          // distanceToEnemyNormalized
+    typeof(float)           // deltaTime
+}
+); ;
         }
 
         [PatchPostfix]
         [HarmonyAfter("me.sol.sain")]
-        public static void PatchPostfix(EnemyInfo __instance, ref float __result, BifacialTransform BotTransform, BifacialTransform enemy, BotDifficultySettingsClass settings, IAIData data, float personalLastSeenTime, Vector3 personalLastSeenPos, bool isStationary)
+        public static void PatchPostfix(
+    EnemyInfo __instance, ref float __result,
+    BotDifficultySettingsClass settings,
+    IAIData enemyAiData,
+    float personalLastSeenTime,
+    Vector3 personalLastSeenPos,
+    float distanceToEnemyNormalized,
+    float deltaTime)
+
         {
+            Logger.LogInfo("SeenCoefPatch Postfix EXECUTED!");
             // Don't use GoalEnemy here because it only change when engaging new enemy (it'll stay indifinitely if not engaged with new enemy)
             // Also they could search without having visual?
 
@@ -457,7 +474,10 @@ namespace ThatsLit
                         xyFacingFactor = 1f - xyFacingFactor; // 0 ~ 1
 
                         // Calculate how flat it is in the vision
-                        var normal = Vector3.Cross(BotTransform.up, -playerLegToBotEye);
+                        // grab the bot’s up-vector directly
+                        // __instance.Owner is the bot whose EnemyInfo we’re patching
+                        var botUp = __instance.Owner.Transform.up;          // -or- __instance.Owner.GameObject.transform.up
+                        var normal = Vector3.Cross(botUp, -playerLegToBotEye);
                         var playerLegToHeadAlongVision = Vector3.ProjectOnPlane(playerLegToHead, normal);
                         layingVerticaltInVisionFactor = Vector3.SignedAngle(playerLegToBotEye, playerLegToHeadAlongVision, normal); // When the angle is 90, it means the player looks straight up in the vision, vice versa for -90.
 #if DEBUG_DETAILS
