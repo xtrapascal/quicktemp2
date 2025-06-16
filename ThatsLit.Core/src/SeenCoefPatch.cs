@@ -18,12 +18,12 @@ namespace ThatsLit
 
         protected override MethodBase GetTargetMethod()
         {
-            return ReflectionHelper.FindMethodByArgTypes(typeof(EnemyInfo), new Type[] { typeof(BifacialTransform), typeof(BifacialTransform), typeof(BotDifficultySettingsClass), typeof(IAIData), typeof(float), typeof(Vector3) }); ;
+            return ReflectionHelper.FindMethodByArgTypes(typeof(EnemyInfo), new Type[] { typeof(BifacialTransform), typeof(BifacialTransform), typeof(BotDifficultySettingsClass), typeof(IAIData), typeof(float), typeof(Vector3), typeof(bool) }); ;
         }
 
         [PatchPostfix]
         [HarmonyAfter("me.sol.sain")]
-        public static void PatchPostfix(EnemyInfo __instance, BifacialTransform BotTransform, BifacialTransform enemy, float personalLastSeenTime, Vector3 personalLastSeenPos, ref float __result)
+        public static void PatchPostfix(EnemyInfo __instance, ref float __result, BifacialTransform BotTransform, BifacialTransform enemy, BotDifficultySettingsClass settings, IAIData data, float personalLastSeenTime, Vector3 personalLastSeenPos, bool isStationary)
         {
             // Don't use GoalEnemy here because it only change when engaging new enemy (it'll stay indifinitely if not engaged with new enemy)
             // Also they could search without having visual?
