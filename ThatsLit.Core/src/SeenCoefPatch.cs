@@ -41,7 +41,6 @@ namespace ThatsLit
     float deltaTime)
 
         {
-            Logger.LogInfo("SeenCoefPatch Postfix EXECUTED!");
             // Don't use GoalEnemy here because it only change when engaging new enemy (it'll stay indifinitely if not engaged with new enemy)
             // Also they could search without having visual?
 
